@@ -6,22 +6,50 @@ import LeadList from '@/components/LeadList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Users, ArrowRightLeft, Download } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Users, 
+  ArrowRightLeft, 
+  Download, 
+  FileText, 
+  FileSpreadsheet, 
+  ChevronDown 
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const LeadActions = () => {
   const { downloadFilteredLeads } = useLeadContext();
   
   return (
     <div className="flex items-center space-x-2">
-      <Button 
-        variant="secondary" 
-        size="sm" 
-        onClick={downloadFilteredLeads}
-        className="flex items-center gap-1"
-      >
-        <Download className="h-4 w-4" />
-        Export Leads
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            className="flex items-center gap-1"
+          >
+            <Download className="h-4 w-4" />
+            Export Leads
+            <ChevronDown className="h-4 w-4 ml-1" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={() => downloadFilteredLeads('csv')} className="cursor-pointer">
+            <FileText className="mr-2 h-4 w-4" />
+            <span>Export as CSV</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => downloadFilteredLeads('excel')} className="cursor-pointer">
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            <span>Export as Excel</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

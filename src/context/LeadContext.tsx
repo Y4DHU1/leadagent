@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Lead, LeadStatus, LeadPriority, LeadFilter } from '@/lib/types';
 import { initialLeads } from '@/lib/mockData';
@@ -16,7 +15,7 @@ interface LeadContextType {
   filter: LeadFilter;
   setFilter: React.Dispatch<React.SetStateAction<LeadFilter>>;
   generateAIInsights: (leadId: string) => void;
-  downloadFilteredLeads: () => void;
+  downloadFilteredLeads: (format?: 'csv' | 'excel') => void;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
@@ -213,15 +212,15 @@ export const LeadProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const filteredLeads = applyFilters();
 
-  // Download filtered leads as CSV
-  const downloadFilteredLeads = () => {
+  // Download filtered leads as CSV or Excel
+  const downloadFilteredLeads = (format: 'csv' | 'excel' = 'csv') => {
     try {
       import('@/utils/downloadUtils').then(({ downloadLeads }) => {
-        downloadLeads(filteredLeads);
+        downloadLeads(filteredLeads, format);
         
         toast({
           title: "Download Started",
-          description: `${filteredLeads.length} leads exported to CSV`,
+          description: `${filteredLeads.length} leads exported to ${format.toUpperCase()}`,
         });
       });
     } catch (err) {
