@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useLeadContext } from '@/context/LeadContext';
 import LeadCard from './LeadCard';
@@ -43,6 +44,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+const LEADS_PER_PAGE = 9; // Number of leads to show per page
 
 const LeadList: React.FC = () => {
   const { filteredLeads, filter, setFilter, getLead } = useLeadContext();
@@ -53,12 +65,14 @@ const LeadList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<LeadStatus[]>([]);
   const [priorityFilter, setPriorityFilter] = useState<LeadPriority[]>([]);
   const [activeTab, setActiveTab] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
   
   const viewingLead = viewingLeadId ? getLead(viewingLeadId) : undefined;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setFilter(prev => ({ ...prev, search: searchTerm }));
+    setCurrentPage(1); // Reset to first page on new search
   };
 
   const clearFilters = () => {
@@ -66,6 +80,7 @@ const LeadList: React.FC = () => {
     setStatusFilter([]);
     setPriorityFilter([]);
     setFilter({});
+    setCurrentPage(1); // Reset to first page when clearing filters
   };
 
   const applyFilters = () => {
@@ -75,6 +90,7 @@ const LeadList: React.FC = () => {
       priority: priorityFilter.length > 0 ? priorityFilter : undefined,
       search: searchTerm || undefined,
     });
+    setCurrentPage(1); // Reset to first page on new filters
   };
 
   const handleViewLead = (id: string) => {
@@ -143,6 +159,61 @@ const LeadList: React.FC = () => {
   };
   
   const displayLeads = getLeadsByTab();
+  
+  // Calculate pagination
+  const totalLeads = displayLeads.length;
+  const totalPages = Math.max(1, Math.ceil(totalLeads / LEADS_PER_PAGE));
+  
+  // Make sure current page is valid after leads might have changed
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  if (safeCurrentPage !== currentPage) {
+    setCurrentPage(safeCurrentPage);
+  }
+  
+  // Get paginated leads
+  const paginatedLeads = displayLeads.slice(
+    (safeCurrentPage - 1) * LEADS_PER_PAGE, 
+    safeCurrentPage * LEADS_PER_PAGE
+  );
+  
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      // Show all pages if total pages is less than max pages to show
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Always show first page
+      pageNumbers.push(1);
+      
+      if (safeCurrentPage > 3) {
+        pageNumbers.push('ellipsis-start');
+      }
+      
+      // Show current page and one page before and after (if possible)
+      const startPage = Math.max(2, safeCurrentPage - 1);
+      const endPage = Math.min(totalPages - 1, safeCurrentPage + 1);
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+      
+      if (safeCurrentPage < totalPages - 2) {
+        pageNumbers.push('ellipsis-end');
+      }
+      
+      // Always show last page
+      pageNumbers.push(totalPages);
+    }
+    
+    return pageNumbers;
+  };
+  
+  const pageNumbers = getPageNumbers();
   
   const editingLead = editingLeadId ? getLead(editingLeadId) : undefined;
 
@@ -318,7 +389,10 @@ const LeadList: React.FC = () => {
       )}
       
       {/* Tabs */}
-      <Tabs defaultValue="all" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="all" className="w-full" value={activeTab} onValueChange={(tab) => {
+        setActiveTab(tab);
+        setCurrentPage(1); // Reset to first page when changing tabs
+      }}>
         <TabsList className="mb-4">
           <TabsTrigger value="all" className="flex items-center">
             <Users className="h-4 w-4 mr-1.5" /> All Leads
@@ -338,17 +412,76 @@ const LeadList: React.FC = () => {
         </TabsList>
         
         <TabsContent value={activeTab} className="mt-0 pt-0">
-          {displayLeads.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayLeads.map(lead => (
-                <LeadCard 
-                  key={lead.id} 
-                  lead={lead} 
-                  onView={handleViewLead} 
-                  onEdit={handleEditLead}
-                />
-              ))}
-            </div>
+          {paginatedLeads.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedLeads.map(lead => (
+                  <LeadCard 
+                    key={lead.id} 
+                    lead={lead} 
+                    onView={handleViewLead} 
+                    onEdit={handleEditLead}
+                  />
+                ))}
+              </div>
+              
+              {/* Pagination */}
+              {totalLeads > LEADS_PER_PAGE && (
+                <Pagination className="mt-8">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage(prev => Math.max(1, prev - 1));
+                        }}
+                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                    
+                    {pageNumbers.map((pageNumber, idx) => (
+                      pageNumber === 'ellipsis-start' || pageNumber === 'ellipsis-end' ? (
+                        <PaginationItem key={`ellipsis-${idx}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink 
+                            href="#" 
+                            isActive={pageNumber === currentPage}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage(pageNumber as number);
+                            }}
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                        }}
+                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+              
+              {/* Summary of pagination */}
+              {totalLeads > LEADS_PER_PAGE && (
+                <div className="text-center text-sm text-gray-500 mt-2">
+                  Showing {(currentPage - 1) * LEADS_PER_PAGE + 1}-{Math.min(currentPage * LEADS_PER_PAGE, totalLeads)} of {totalLeads} leads
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-10">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
