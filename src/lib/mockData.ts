@@ -54,7 +54,7 @@ export const generateMockLeads = (): Lead[] => {
     'Company recently received funding',
     'Contact has changed positions recently',
     'Company is in growth phase',
-    'Competitor's client showing interest',
+    'Competitor\'s client showing interest',
     'Seasonal buying pattern detected',
     'Multiple stakeholders from same company',
     'Engagement increased after recent product announcement',
