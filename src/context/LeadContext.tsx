@@ -16,6 +16,7 @@ interface LeadContextType {
   filter: LeadFilter;
   setFilter: React.Dispatch<React.SetStateAction<LeadFilter>>;
   generateAIInsights: (leadId: string) => void;
+  downloadFilteredLeads: () => void;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
@@ -212,6 +213,27 @@ export const LeadProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const filteredLeads = applyFilters();
 
+  // Download filtered leads as CSV
+  const downloadFilteredLeads = () => {
+    try {
+      import('@/utils/downloadUtils').then(({ downloadLeads }) => {
+        downloadLeads(filteredLeads);
+        
+        toast({
+          title: "Download Started",
+          description: `${filteredLeads.length} leads exported to CSV`,
+        });
+      });
+    } catch (err) {
+      setError('Failed to download leads');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to download leads. Please try again.",
+      });
+    }
+  };
+
   return (
     <LeadContext.Provider value={{
       leads,
@@ -225,6 +247,7 @@ export const LeadProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       filter,
       setFilter,
       generateAIInsights,
+      downloadFilteredLeads,
     }}>
       {children}
     </LeadContext.Provider>

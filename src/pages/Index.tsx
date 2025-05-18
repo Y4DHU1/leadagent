@@ -1,11 +1,30 @@
 
 import React, { useState } from 'react';
-import { LeadProvider } from '@/context/LeadContext';
+import { LeadProvider, useLeadContext } from '@/context/LeadContext';
 import Dashboard from '@/components/Dashboard';
 import LeadList from '@/components/LeadList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { LayoutDashboard, Users, ArrowRightLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { LayoutDashboard, Users, ArrowRightLeft, Download } from 'lucide-react';
+
+const LeadActions = () => {
+  const { downloadFilteredLeads } = useLeadContext();
+  
+  return (
+    <div className="flex items-center space-x-2">
+      <Button 
+        variant="secondary" 
+        size="sm" 
+        onClick={downloadFilteredLeads}
+        className="flex items-center gap-1"
+      >
+        <Download className="h-4 w-4" />
+        Export Leads
+      </Button>
+    </div>
+  );
+};
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -23,6 +42,7 @@ const Index = () => {
                 </h1>
                 <p className="text-sm text-gray-500">Manage and analyze your leads with AI assistance</p>
               </div>
+              {activeTab === 'leads' && <LeadActions />}
             </div>
           </div>
         </header>
