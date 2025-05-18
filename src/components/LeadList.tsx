@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useLeadContext } from '@/context/LeadContext';
 import LeadCard from './LeadCard';
@@ -23,7 +22,8 @@ import {
   Users, 
   CheckCircle2, 
   Clock, 
-  AlertTriangle 
+  AlertTriangle,
+  Edit
 } from 'lucide-react';
 import {
   DropdownMenu,
